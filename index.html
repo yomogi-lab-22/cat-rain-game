@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ねこ傘 — 黒猫を雨から守ろう</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:linear-gradient(145deg,#e7ded0,#f7f1e8 55%,#ddd1c0);
+font-family:system-ui,-apple-system,"Yu Gothic",sans-serif;color:#34343a;display:grid;place-items:center}
+.wrap{width:min(800px,95vw);padding:18px}
+header{display:flex;justify-content:space-between;align-items:end;margin-bottom:10px}
+h1{margin:0;font-size:32px;letter-spacing:.05em}.sub{font-size:13px;opacity:.6;margin-top:3px}
+.lifeBox{font-size:13px;font-weight:700;text-align:right}.life{display:flex;gap:4px;justify-content:flex-end;margin-top:5px}
+.life i{width:11px;height:11px;border-radius:50%;background:#8d9694}.life i.off{opacity:.17}
+#game{position:relative;overflow:hidden;height:min(650px,74vh);min-height:500px;border-radius:28px;
+background:linear-gradient(#d7e0de 0%,#e8dfd0 60%,#d2c0a1 100%);
+box-shadow:0 18px 50px #5b4d3b22;cursor:none}
+.leaf{position:absolute;opacity:.3;font-size:24px;user-select:none}
+#timer{position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:9;
+font-size:32px;line-height:1;font-weight:800;letter-spacing:.03em;font-variant-numeric:tabular-nums;
+background:#fffaf0dd;padding:12px 26px;border-radius:999px;box-shadow:0 6px 20px #4c3d2a18}
+#umbrella{position:absolute;top:58%;left:50%;width:162px;height:112px;transform:translate(-50%,-50%);z-index:5;pointer-events:none}
+.canopy{position:absolute;width:162px;height:58px;left:0;top:0;border-radius:90px 90px 15px 15px;
+background:conic-gradient(from 270deg,#f2a65a 0 25%,#8ec9c5 25% 50%,#d98282 50% 75%,#b6c77a 75% 100%);
+box-shadow:0 5px 12px #453b3128}
+.canopy:after{content:"";position:absolute;left:79px;top:54px;width:4px;height:54px;background:#5b5350;border-radius:3px}
+.hook{position:absolute;left:80px;top:102px;width:14px;height:16px;border:4px solid #5b5350;border-top:0;border-radius:0 0 12px 12px}
+#cat{position:absolute;bottom:38px;left:50%;width:108px;height:108px;z-index:4}
+.catPiece{position:absolute;inset:0;overflow:hidden;transition:opacity .15s}
+.catPiece.gone{opacity:0}
+.catPiece.returnFlash{animation:vermillion .55s ease-out}
+@keyframes vermillion{
+0%{filter:none}
+10%{filter:sepia(1) saturate(8) hue-rotate(325deg) brightness(1.15)}
+25%{filter:none}
+40%{filter:sepia(1) saturate(8) hue-rotate(325deg) brightness(1.15)}
+55%{filter:none}
+70%{filter:sepia(1) saturate(8) hue-rotate(325deg) brightness(1.12)}
+85%{filter:none}
+100%{filter:none}
+}
+.rb{clip-path:polygon(50% 50%,100% 50%,100% 100%,0 100%,0 50%)}.lb{clip-path:polygon(0 50%,50% 50%,50% 100%,0 100%)}
+.rt{clip-path:polygon(50% 0,100% 0,100% 50%,50% 50%)}.lt{clip-path:polygon(0 0,50% 0,50% 50%,0 50%)}
+.catBody{position:absolute;left:14px;bottom:0;width:80px;height:70px;background:#24242a;border-radius:48% 48% 42% 42%}
+.head{position:absolute;left:20px;top:7px;width:68px;height:61px;background:#24242a;border-radius:50% 50% 46% 46%}
+.ear{position:absolute;top:-18px;left:5px;width:28px;height:31px;background:#24242a;
+clip-path:polygon(50% 0,100% 100%,0 100%);transform:rotate(-4deg)}
+.ear.r{left:auto;right:5px;transform:rotate(4deg)}
+.eye{position:absolute;top:31px;width:7px;height:7px;background:#d9b65b;border-radius:50%}.eye.l{left:18px}.eye.r{right:18px}
+.nose{position:absolute;top:42px;left:31px;width:7px;height:5px;background:#9d7378;border-radius:50%}
+.tail{position:absolute;right:-5px;bottom:20px;width:42px;height:55px;border:10px solid #24242a;border-left:0;border-bottom:0;border-radius:0 45px 0 0;transform:rotate(8deg)}
+.drop{position:absolute;width:15px;height:21px;border-radius:55%;background:linear-gradient(#b6dfe8,#79b8c7);box-shadow:0 2px 5px #456b7528;z-index:2}
+#overlay{position:absolute;inset:0;background:#fffaf2dc;backdrop-filter:blur(3px);display:grid;place-items:center;z-index:20}
+.card{background:#fffaf2f5;border:1px solid #fff;box-shadow:0 12px 35px #4c3d2a20;border-radius:24px;padding:28px;text-align:center;width:min(440px,88%)}
+.card h2{margin:0 0 8px;font-size:25px}.card p{margin:0 0 18px;line-height:1.7;opacity:.72}
+.levels{display:flex;gap:9px;justify-content:center;margin:15px 0 20px}
+.level{border:1px solid #d8cec0;background:#fff;color:#4a4a4d;border-radius:16px;padding:11px 14px;cursor:pointer;font-weight:750}
+.level.selected{background:#4f5558;color:#fff;border-color:#4f5558}
+button#start{border:0;border-radius:999px;background:#4f5558;color:#fff;padding:12px 26px;font-size:15px;font-weight:700;cursor:pointer}
+.hint{text-align:center;font-size:12px;opacity:.55;margin-top:9px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><h1>ねこ傘</h1><div class="sub">自由に動く黒猫を、パラソルで雨から守ろう</div></div>
+<div class="lifeBox">残りの体 <span id="lifeText">4 / 4</span><div class="life" id="life"><i></i><i></i><i></i><i></i></div></div></header>
+<div id="game">
+<div id="timer">0</div>
+<span class="leaf" style="left:8%;top:13%">🍂</span><span class="leaf" style="left:80%;top:19%">🍁</span><span class="leaf" style="left:15%;top:48%">🍁</span><span class="leaf" style="left:88%;top:59%">🍂</span>
+<div id="umbrella"><div class="canopy"></div><div class="hook"></div></div>
+<div id="cat">
+<div class="catPiece rb"><div class="tail"></div><div class="catBody"></div><div class="head"><span class="ear"></span><span class="ear r"></span><span class="eye l"></span><span class="eye r"></span><span class="nose"></span></div></div>
+<div class="catPiece lb"><div class="catBody"></div><div class="head"><span class="ear"></span><span class="ear r"></span><span class="eye l"></span><span class="eye r"></span><span class="nose"></span></div></div>
+<div class="catPiece rt"><div class="catBody"></div><div class="head"><span class="ear"></span><span class="ear r"></span><span class="eye l"></span><span class="eye r"></span><span class="nose"></span></div></div>
+<div class="catPiece lt"><div class="catBody"></div><div class="head"><span class="ear"></span><span class="ear r"></span><span class="eye l"></span><span class="eye r"></span><span class="nose"></span></div></div>
+</div>
+<div id="overlay"><div class="card"><h2 id="title">黒猫を守ろう ☔</h2><p id="desc">難易度を選んでください。<br>マウスでパラソルだけを動かします。</p>
+<div class="levels"><button class="level selected" data-level="1">LEVEL 1<br><small>やさしい</small></button><button class="level" data-level="2">LEVEL 2<br><small>ふつう</small></button><button class="level" data-level="3">LEVEL 3<br><small>むずかしい</small></button></div>
+<button id="start">ゲーム開始</button></div></div>
+</div>
+<div class="hint">猫は自動で動きます　｜　パラソルはマウスで左右に動かします</div>
+</div>
+<script>
+const game=document.querySelector('#game'), umbrella=document.querySelector('#umbrella'), cat=document.querySelector('#cat');
+const overlay=document.querySelector('#overlay'),start=document.querySelector('#start'),timer=document.querySelector('#timer');
+const lifeEls=[...document.querySelectorAll('#life i')],lifeText=document.querySelector('#lifeText');
+const parts=[...document.querySelectorAll('.catPiece')];
+let level=1,running=false,hp=4,drops=[],raf=0,last=0,spawn=0,catX=0,targetX=0,nextTarget=0,restoreAt=null;
+const settings={1:{spawn:900,speed:105,cat:0.0007},2:{spawn:430,speed:180,cat:0.0022},3:{spawn:270,speed:220,cat:0.0022}};
+
+document.querySelectorAll('.level').forEach(b=>b.onclick=()=>{document.querySelectorAll('.level').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');level=+b.dataset.level});
+
+game.addEventListener('mousemove',e=>{if(!running)return;const r=game.getBoundingClientRect();const x=e.clientX-r.left;umbrella.style.left=Math.max(81,Math.min(game.clientWidth-81,x))+'px'});
+
+function sound(){
+ const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
+ const c=new C(),o=c.createOscillator(),g=c.createGain();o.type='sine';
+ o.frequency.setValueAtTime(560,c.currentTime);o.frequency.exponentialRampToValueAtTime(190,c.currentTime+.13);
+ g.gain.setValueAtTime(.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(.13,c.currentTime+.008);
+ g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.16);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+.17)
+}
+function spawnDrop(){
+ const d=document.createElement('div');d.className='drop';d.x=8+Math.random()*(game.clientWidth-16);d.y=-25;
+ d.v=settings[level].speed*(.82+Math.random()*.36);d.style.left=d.x+'px';d.style.top=d.y+'px';game.appendChild(d);drops.push(d)
+}
+function catHit(d){
+ const cr=cat.getBoundingClientRect(),dr=d.getBoundingClientRect();
+ return dr.right>cr.left+8&&dr.left<cr.right-8&&dr.bottom>cr.top+12&&dr.top<cr.bottom-8
+}
+function umbrellaHit(d){
+ const ur=umbrella.getBoundingClientRect(),dr=d.getBoundingClientRect();
+ return dr.right>ur.left&&dr.left<ur.right&&dr.bottom>=ur.top&&dr.top<ur.top+56
+}
+function wet(){
+ if(hp<=0)return;
+ hp--;lifeEls[hp].classList.add('off');lifeText.textContent=hp+' / 4';
+ // 被弾と同時に、必ず対応する1/4を消し、ここで回復タイマーを開始
+ parts[3-hp].classList.add('gone');sound();
+ restoreAt=performance.now()+10000;
+ if(hp===0)end()
+}
+function restore(){
+ if(hp>=4||restoreAt===null)return;
+ const part=parts.find(p=>p.classList.contains('gone'));if(!part)return;
+ part.classList.remove('gone');part.classList.remove('returnFlash');void part.offsetWidth;part.classList.add('returnFlash');
+ setTimeout(()=>part.classList.remove('returnFlash'),2050);
+ hp++;lifeEls[hp-1].classList.remove('off');lifeText.textContent=hp+' / 4';
+ restoreAt=hp<4?performance.now()+10000:null;
+}
+function moveCat(t){
+ if(t>nextTarget){targetX=54+Math.random()*(game.clientWidth-108);nextTarget=t+1800+Math.random()*2600}
+ const target=Math.max(54,Math.min(game.clientWidth-54,targetX));
+ catX+=(target-catX)*settings[level].cat*(t-last+16);cat.style.left=catX+'px'
+}
+function frame(t){
+ if(!running)return;const dt=Math.min(32,t-last);last=t;spawn+=dt;moveCat(t);
+ if(restoreAt!==null&&t>=restoreAt)restore();
+ // カウンターは猫の体が一度でも消えた瞬間から表示開始。無傷なら0。
+ timer.textContent=restoreAt===null&&hp===4?'0':(restoreAt?Math.max(0,Math.ceil((restoreAt-t)/1000)):'0');
+ if(spawn>=settings[level].spawn){spawn=0;spawnDrop();if(level===3&&Math.random()<.45)setTimeout(spawnDrop,70)}
+ drops=drops.filter(d=>{
+   d.y+=d.v*dt/1000;d.style.top=d.y+'px';
+   if(d.y>game.clientHeight+30){d.remove();return false}
+   if(umbrellaHit(d)){d.remove();return false}
+   if(catHit(d)){wet();d.remove();return false}
+   return true
+ });
+ raf=requestAnimationFrame(frame)
+}
+function reset(){
+ drops.forEach(d=>d.remove());drops=[];hp=4;lifeEls.forEach(x=>x.classList.remove('off'));lifeText.textContent='4 / 4';
+ parts.forEach(x=>x.classList.remove('gone','returnFlash'));restoreAt=null;timer.textContent='0';
+ catX=game.clientWidth/2;targetX=catX;nextTarget=0;cat.style.left=catX+'px';umbrella.style.left='50%'
+}
+function startGame(){reset();running=true;overlay.style.display='none';last=performance.now();spawn=0;cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)}
+function end(){
+ running=false;cancelAnimationFrame(raf);timer.textContent='0';
+ document.querySelector('#title').textContent='猫がびしょびしょ… 🐈‍⬛💧';
+ document.querySelector('#desc').innerHTML='猫に4回雨が当たりました。<br>もう一度守ってあげよう！';
+ start.textContent='もう一回遊ぶ';overlay.style.display='grid'
+}
+start.onclick=startGame;
+umbrella.style.left='50%';catX=game.clientWidth/2;cat.style.left=catX+'px';
+</script>
+</body>
+</html>
